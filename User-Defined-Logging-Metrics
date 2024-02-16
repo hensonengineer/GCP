@@ -1,0 +1,91 @@
+
+
+#From Commandline; you can audit each of your Projects to see what User-Defined-Logging-Metrics are enabled
+
+#Reference https://cloud.google.com/monitoring/custom-metrics/creating-metrics
+
+#replace PROJECT with your actual PROJECT name
+gcloud logging metrics list --project=PROJECT --format="csv(NAME,DESCRIPTION,FILTER)" > LogMetrics-PROJECT.csv
+
+#List of Filters covered in this file
+
+IAM_Custom_role_changes		CIS Benchmark 2.6 to detect changes to Roles
+IAM_Audit_Changes	      	CIS Benchmark 2.5 for Audit configuration changes
+Compute_Firewall_Changes	CIS Benchmark 2.7 for changes to firewalls
+Bucket_IAM_permissions		CIS Benchmark 2.10 Bucket IAM permission changes
+VPC_Network_changes	    	CIS Benchmark 2.9 VPC Network changes
+VPC_Network_Route_changes	CIS Benchmark 2.8 VPC Network Route changes
+Compute_Firewall_Changes	CIS Benchmark 2.7 for changes to firewalls
+
+
+#Specific Filters required for each [ console add ]:
+
+#CIS Benchmark 2.6 to detect changes to Roles
+Name: projects/"PROJECT"/metrics/IAM_Custom_role_changes
+Type: Counter
+Description: CIS Benchmark 2.6 to detect changes to Roles
+Log scope: Project logs
+
+resource.type="iam_role" AND protoPayload.methodName ="google.iam.admin.v1.CreateRole" OR
+protoPayload.methodName="google.iam.admin.v1.DeleteRole" OR
+protoPayload.methodName="google.iam.admin.v1.UpdateRole"
+
+--------
+#CIS Benchmark 2.5 for Audit configuration changes
+Name: projects/"PROJECT"/metrics/IAM_Audit_Changes
+Type: Counter
+Description: CIS Benchmark 2.5 for Audit configuration changes
+Log scope: Project logs
+
+protoPayload.methodName="SetIamPolicy" AND
+protoPayload.serviceData.policyDelta.auditConfigDeltas:*
+
+---------
+#CIS Benchmark 2.7 for changes to firewalls
+Name: projects/"PROJECT"/metrics/Compute_Firewall_Changes
+Type: Counter
+Description: CIS Benchmark 2.7 for changes to firewalls
+Log scope: Project logs
+
+resource.type="gce_firewall_rule" AND
+jsonPayload.event_subtype="compute.firewalls.patch" OR
+jsonPayload.event_subtype="compute.firewalls.insert"
+
+----------
+#CIS Benchmark 2.10 Bucket IAM permission changes
+Name: projects/"PROJECT"/metrics/Bucket_IAM_permissions
+Type: Counter
+Description: CIS Benchmark 2.10 Bucket IAM permission changes
+Log scope: Project logs
+
+resource.type=gcs_bucket AND
+protoPayload.methodName="storage.setIamPermissions"
+
+----------
+CIS Benchmark 2.9 VPC Network changes
+Name: projects/"PROJECT"/metrics/VPC_Network_changes
+Type: Counter
+Description: CIS Benchmark 2.9 VPC Network changes
+Log scope: Project logs
+
+resource.type=gce_network AND jsonPayload.event_subtype="compute.networks.insert" OR jsonPayload.event_subtype="compute.networks.patch" OR jsonPayload.event_subtype="compute.networks.delete"  OR jsonPayload.event_subtype="compute.networks.removePeering" OR jsonPayload.event_subtype="compute.networks.addPeering"
+
+----------
+#CIS Benchmark 2.8 VPC Network Route changes
+Name: projects/"PROJECTS"/metrics/VPC_Network_Route_changes
+Type:Counter
+Description:CIS Benchmark 2.8 VPC Network Route changes
+Log scope: Project logs
+
+resource.type="gce_route" AND jsonPayload.event_subtype="compute.routes.delete" OR jsonPayload.event_subtype="compute.routes.insert"
+
+----------
+CIS Benchmark 2.7 for changes to firewalls
+Name: projects/"PROJECT"/metrics/Compute_Firewall_Changes
+Type: Counter
+Description: CIS Benchmark 2.7 for changes to firewalls
+Log scope: Project logs
+
+resource.type="gce_firewall_rule" AND
+jsonPayload.event_subtype="compute.firewalls.patch" OR
+jsonPayload.event_subtype="compute.firewalls.insert"
